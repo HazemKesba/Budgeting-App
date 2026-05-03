@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}{{ goal.goal_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .back-link { color: #2980b9; text-decoration: none; font-size: 0.9rem; display: inline-block; margin-bottom: 1rem; }
+    .card { background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 1.5rem; }
+    .card h2 { font-size: 1.3rem; margin-bottom: 1rem; }
+    .progress-track { height: 12px; background: #eee; border-radius: 6px; overflow: hidden; margin: 1rem 0; }
+    .progress-fill { height: 100%; border-radius: 6px; background: #2980b9; }
+    .progress-fill.complete { background: #27ae60; }
+    .progress-fill.warning  { background: #e67e22; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    .stat { background: #f8f9fa; border-radius: 6px; padding: 0.75rem 1rem; }
+    .stat-label { font-size: 0.75rem; color: #888; margin-bottom: 0.25rem; }
+    .stat-value { font-size: 1.1rem; font-weight: bold; color: #2c3e50; }
+    .actions { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
+    .contribute-form { display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap; }
+    .contribute-form input { padding: 0.5rem 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; width: 180px; }
+    .contribute-form label { font-size: 0.85rem; color: #555; display: block; margin-bottom: 0.3rem; }
+    .status-badge { font-size: 0.85rem; padding: 3px 12px; border-radius: 10px; }
+    .status-badge.completed   { background: #d4edda; color: #155724; }
+    .status-badge.in-progress { background: #cce5ff; color: #004085; }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'saving-goals-list' %}" class="back-link">← Back to Goals</a>
+
+<div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+        <h2>{{ goal.goal_name }}</h2>
+        <span class="status-badge {% if goal.status == 'Completed' %}completed{% else %}in-progress{% endif %}">
+            {{ goal.status }}
+        </span>
+    </div>
+
+    <div class="progress-track">
+        <div class="progress-fill
+            {% if goal.progress_percentage == '100.00' %}complete
+            {% elif goal.progress_percentage >= '80.00' %}warning
+            {% endif %}"
+            style="width: {{ goal.progress_percentage }}%">
+        </div>
+    </div>
+    <p style="font-size:0.85rem; color:#888; margin-bottom:1rem;">{{ goal.progress_percentage }}% of target reached</p>
+
+    <div class="stats-grid">
+        <div class="stat">
+            <div class="stat-label">Saved</div>
+            <div class="stat-value">EGP {{ goal.current_amount }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">Target</div>
+            <div class="stat-value">EGP {{ goal.target_amount }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">Remaining</div>
+            <div class="stat-value">EGP {{ goal.remaining_amount }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">Deadline</div>
+            <div class="stat-value">{{ goal.deadline }}</div>
+        </div>
+        {% if goal.status != 'Completed' %}
+        <div class="stat">
+            <div class="stat-label">Monthly needed</div>
+            <div class="stat-value">EGP {{ goal.monthly_saving_needed }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="actions">
+        <a href="{% url 'saving-goals-edit' goal.id %}"   class="btn btn-primary">Edit</a>
+        <a href="{% url 'saving-goals-delete' goal.id %}" class="btn btn-danger">Delete</a>
+    </div>
+</div>
+
+{% if goal.status != 'Completed' %}
+<div class="card">
+    <h2>Add Contribution</h2>
+    <form method="POST" action="{% url 'goal-contribute' goal.id %}">
+        {% csrf_token %}
+        <div class="contribute-form">
+            <div>
+                <label for="amount">Amount (EGP)</label>
+                <input type="number" id="amount" name="amount" placeholder="e.g. 500" min="1" step="0.01" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Add</button>
+        </div>
+    </form>
+</div>
+{% endif %}
+{% endblock %}
