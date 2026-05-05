@@ -13,7 +13,7 @@ class SavingGoalListView(LoginRequiredMixin, View):
         status_filter = request.GET.get("status")
         goals = services.get_user_goals(request.user, status_filter=status_filter)
         context = {
-            "goals": [services.build_goal_data(g) for g in goals],
+            "goals":[services.build_goal_data(g) for g in goals],
             "status_filter": status_filter,
         }
         return render(request, "saving_goals/list.html", context)
@@ -36,7 +36,7 @@ class SavingGoalCreateView(LoginRequiredMixin, View):
 
     def post(self, request):
         goal_name = request.POST.get("goal_name", "")
-        target_amount  = request.POST.get("target_amount")
+        target_amount = request.POST.get("target_amount")
         current_amount = request.POST.get("current_amount", 0)
         deadline_str = request.POST.get("deadline", "")
 
@@ -53,8 +53,8 @@ class SavingGoalCreateView(LoginRequiredMixin, View):
                 target_amount=target_amount,
                 current_amount=current_amount,
                 deadline=deadline,
+                request=request,
             )
-            messages.success(request, "Goal created successfully.")
             return redirect("saving-goals-detail", goal_id=goal.id)
 
         except ValidationError as e:
@@ -124,8 +124,7 @@ class GoalContributionView(LoginRequiredMixin, View):
         amount = request.POST.get("amount")
 
         try:
-            services.add_contribution(request.user, goal_id, amount)
-            messages.success(request, "Contribution added successfully.")
+            services.add_contribution(request.user, goal_id, amount, request=request)
         except ValidationError as e:
             messages.error(request, e.message)
 

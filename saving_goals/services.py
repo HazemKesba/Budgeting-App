@@ -2,13 +2,15 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 from decimal import Decimal
 from .models import SavingGoal
+from .observers import goal_manager
+from .singleton import SessionManager
 
 
-def create_goal(user, goal_name, target_amount, deadline, current_amount=0):
+def create_goal(user, goal_name, target_amount, deadline, current_amount=0, request=None):
     if not goal_name or not goal_name.strip():
         raise ValidationError("Goal name is required.")
 
-    target_amount= Decimal(str(target_amount))
+    target_amount  = Decimal(str(target_amount))
     current_amount = Decimal(str(current_amount))
 
     if target_amount <= 0:
@@ -29,7 +31,7 @@ def create_goal(user, goal_name, target_amount, deadline, current_amount=0):
         else SavingGoal.Status.IN_PROGRESS
     )
 
-    return SavingGoal.objects.create(
+    goal = SavingGoal.objects.create(
         user=user,
         goal_name=goal_name.strip(),
         target_amount=target_amount,
@@ -37,6 +39,9 @@ def create_goal(user, goal_name, target_amount, deadline, current_amount=0):
         deadline=deadline,
         status=status,
     )
+
+    goal_manager.notify("goal_created", {"goal_name": goal.goal_name}, request=request)
+    return goal
 
 
 def get_user_goals(user, status_filter=None):
@@ -90,10 +95,13 @@ def delete_goal(user, goal_id):
     if goal is None:
         return False
     goal.delete()
+    session = SessionManager()
+    session.clear()
+
     return True
 
 
-def add_contribution(user, goal_id, amount):
+def add_contribution(user, goal_id, amount, request=None):
     goal = get_goal(user, goal_id)
     if goal is None:
         return None
@@ -109,8 +117,19 @@ def add_contribution(user, goal_id, amount):
 
     if goal.current_amount >= goal.target_amount:
         goal.status = SavingGoal.Status.COMPLETED
+        goal.save(update_fields=["current_amount", "status", "updated_at"])
+        goal_manager.notify("goal_completed", {"goal_name": goal.goal_name}, request=request)
+    else:
+        goal.save(update_fields=["current_amount", "updated_at"])
+        goal_manager.notify("contribution_added", {
+            "goal_name": goal.goal_name,
+            "amount":    str(amount),
+            "progress":  str(calculate_progress(goal)),
+        }, request=request)
+    session = SessionManager()
+    session.set("last_viewed_goal", goal.id)
+    session.set("last_progress", str(calculate_progress(goal)))
 
-    goal.save(update_fields=["current_amount", "status", "updated_at"])
     return goal
 
 
@@ -122,7 +141,7 @@ def calculate_progress(goal):
 
 
 def calculate_monthly_saving_needed(goal):
-    today = timezone.now().date()
+    today  = timezone.now().date()
     months = (goal.deadline.year - today.year) * 12 + (goal.deadline.month - today.month)
     months = max(1, months)
     remaining = max(Decimal("0.00"), goal.target_amount - goal.current_amount)
@@ -130,16 +149,19 @@ def calculate_monthly_saving_needed(goal):
 
 
 def build_goal_data(goal):
+    session = SessionManager()
+    session.set("last_viewed_goal", goal.id)
+
     return {
-        "id":goal.id,
-        "goal_name":goal.goal_name,
+        "id": goal.id,
+        "goal_name": goal.goal_name,
         "target_amount":str(goal.target_amount),
         "current_amount":str(goal.current_amount),
         "remaining_amount":str(max(Decimal("0.00"), goal.target_amount - goal.current_amount)),
-        "deadline": goal.deadline.isoformat(),
+        "deadline":goal.deadline.isoformat(),
         "status":goal.status,
         "progress_percentage":str(calculate_progress(goal)),
-        "monthly_saving_needed": str(calculate_monthly_saving_needed(goal)),
-        "created_at": goal.created_at.isoformat(),
+        "monthly_saving_needed":str(calculate_monthly_saving_needed(goal)),
+        "created_at":goal.created_at.isoformat(),
         "updated_at":goal.updated_at.isoformat(),
     }
