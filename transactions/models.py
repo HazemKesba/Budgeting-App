@@ -26,7 +26,8 @@ class Category(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "user"]
+                fields=["name", "user"],
+                name='unique_category_per_user'
             )
         ]
         ordering = ["name"]
@@ -38,7 +39,7 @@ class Category(models.Model):
 class Transaction(models.Model):
     user = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE)
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
-    amount = models.DecimalField(decimal_places=2)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
     description = models.CharField(max_length=200)
     category = models.ForeignKey(
         "transactions.Category",
