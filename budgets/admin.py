@@ -1,5 +1,4 @@
 from django.contrib import admin
-from .models import Budget, Category
+from .models import Budget
 
-admin.site.register(Category)
 admin.site.register(Budget)
