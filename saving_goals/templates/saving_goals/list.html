@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Saving Goals{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .page-header h1 { font-size: 1.5rem; }
+    .filters { margin-bottom: 1.5rem; display: flex; gap: 0.5rem; }
+    .filter-btn { padding: 0.4rem 1rem; border-radius: 20px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 0.85rem; text-decoration: none; color: #333; }
+    .filter-btn.active { background: #2980b9; color: white; border-color: #2980b9; }
+    .goals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+    .goal-card { background: white; border-radius: 8px; padding: 1.2rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .goal-card h3 { font-size: 1rem; margin-bottom: 0.75rem; }
+    .amounts { display: flex; justify-content: space-between; font-size: 0.85rem; color: #555; margin-bottom: 0.5rem; }
+    .current { font-size: 1.1rem; font-weight: bold; color: #2c3e50; }
+    .progress-track { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; margin-bottom: 0.5rem; }
+    .progress-fill { height: 100%; border-radius: 4px; background: #2980b9; }
+    .progress-fill.complete { background: #27ae60; }
+    .progress-fill.warning  { background: #e67e22; }
+    .meta { font-size: 0.8rem; color: #888; display: flex; justify-content: space-between; margin-bottom: 0.75rem; }
+    .status-badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; }
+    .status-badge.completed   { background: #d4edda; color: #155724; }
+    .status-badge.in-progress { background: #cce5ff; color: #004085; }
+    .card-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .empty-state { text-align: center; padding: 3rem; color: #888; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Saving Goals</h1>
+    <a href="{% url 'saving-goals-create' %}" class="btn btn-primary">+ New Goal</a>
+</div>
+
+<div class="filters">
+    <a href="{% url 'saving-goals-list' %}" class="filter-btn {% if not status_filter %}active{% endif %}">All</a>
+    <a href="{% url 'saving-goals-list' %}?status=In+Progress" class="filter-btn {% if status_filter == 'In Progress' %}active{% endif %}">In Progress</a>
+    <a href="{% url 'saving-goals-list' %}?status=Completed" class="filter-btn {% if status_filter == 'Completed' %}active{% endif %}">Completed</a>
+</div>
+
+{% if goals %}
+<div class="goals-grid">
+    {% for goal in goals %}
+    <div class="goal-card">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
+            <h3>{{ goal.goal_name }}</h3>
+            <span class="status-badge {% if goal.status == 'Completed' %}completed{% else %}in-progress{% endif %}">
+                {{ goal.status }}
+            </span>
+        </div>
+
+        <div class="amounts">
+            <span class="current">EGP {{ goal.current_amount }}</span>
+            <span>of EGP {{ goal.target_amount }}</span>
+        </div>
+
+        <div class="progress-track">
+            <div class="progress-fill
+                {% if goal.progress_percentage == '100.00' %}complete
+                {% elif goal.progress_percentage >= '80.00' %}warning
+                {% endif %}"
+                style="width: {{ goal.progress_percentage }}%">
+            </div>
+        </div>
+
+        <div class="meta">
+            <span>{{ goal.progress_percentage }}% complete</span>
+            <span>Due: {{ goal.deadline }}</span>
+        </div>
+
+        {% if goal.status != 'Completed' %}
+        <div class="meta">
+            <span>EGP {{ goal.monthly_saving_needed }}/month needed</span>
+            <span>EGP {{ goal.remaining_amount }} left</span>
+        </div>
+        {% endif %}
+
+        <div class="card-actions">
+            <a href="{% url 'saving-goals-detail' goal.id %}" class="btn btn-secondary" style="font-size:0.8rem; padding:0.3rem 0.8rem;">View</a>
+            <a href="{% url 'saving-goals-edit' goal.id %}"   class="btn btn-primary"   style="font-size:0.8rem; padding:0.3rem 0.8rem;">Edit</a>
+            <a href="{% url 'saving-goals-delete' goal.id %}" class="btn btn-danger"    style="font-size:0.8rem; padding:0.3rem 0.8rem;">Delete</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <p>No goals yet.</p>
+    <a href="{% url 'saving-goals-create' %}" class="btn btn-primary" style="margin-top:1rem;">Create your first goal</a>
+</div>
+{% endif %}
+{% endblock %}

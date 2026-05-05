@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}New Saving Goal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .back-link { color: #2980b9; text-decoration: none; font-size: 0.9rem; display: inline-block; margin-bottom: 1rem; }
+    .card { background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); max-width: 500px; }
+    .card h2 { font-size: 1.3rem; margin-bottom: 1.5rem; }
+    .field { margin-bottom: 1rem; }
+    .field label { display: block; font-size: 0.85rem; color: #555; margin-bottom: 0.3rem; font-weight: 500; }
+    .field input { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.95rem; }
+    .field input:focus { outline: none; border-color: #2980b9; }
+    .field .hint { font-size: 0.75rem; color: #999; margin-top: 0.25rem; }
+    .form-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'saving-goals-list' %}" class="back-link">← Back to Goals</a>
+
+<div class="card">
+    <h2>New Saving Goal</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="field">
+            <label for="goal_name">Goal Name *</label>
+            <input type="text" id="goal_name" name="goal_name" maxlength="100" required
+                   value="{{ form_data.goal_name|default:'' }}" placeholder="e.g. Summer Vacation">
+        </div>
+
+        <div class="field">
+            <label for="target_amount">Target Amount (EGP) *</label>
+            <input type="number" id="target_amount" name="target_amount" min="1" step="0.01" required
+                   value="{{ form_data.target_amount|default:'' }}" placeholder="e.g. 50000">
+        </div>
+
+        <div class="field">
+            <label for="current_amount">Already Saved (EGP)</label>
+            <input type="number" id="current_amount" name="current_amount" min="0" step="0.01"
+                   value="{{ form_data.current_amount|default:'0' }}">
+            <span class="hint">Leave 0 if you haven't started yet.</span>
+        </div>
+
+        <div class="field">
+            <label for="deadline">Deadline *</label>
+            <input type="date" id="deadline" name="deadline" required
+                   value="{{ form_data.deadline|default:'' }}">
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Create Goal</button>
+            <a href="{% url 'saving-goals-list' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

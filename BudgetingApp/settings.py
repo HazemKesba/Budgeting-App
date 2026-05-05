@@ -62,7 +62,7 @@ ROOT_URLCONF = 'BudgetingApp.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -87,6 +87,14 @@ DATABASES = {
     }
 }
 
+
+# Custom User model
+AUTH_USER_MODEL = "users.CustomUser"
+
+
+# Login redirect URL
+LOGIN_REDIRECT_URL = "dashboard"
+LOGIN_URL = "/auth/login/"
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
