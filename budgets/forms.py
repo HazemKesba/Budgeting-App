@@ -11,5 +11,9 @@ class BudgetForm(forms.ModelForm):
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # only show THIS user's categories in the dropdown
-        self.fields['category'].queryset = Category.objects.filter(user=user)
+        # show categories with no user (general) AND this user's categories
+        self.fields['category'].queryset = Category.objects.filter(
+            user=user
+        ) | Category.objects.filter(
+            user=None
+        )
