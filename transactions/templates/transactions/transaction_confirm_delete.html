@@ -1,0 +1,155 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Delete Transaction</title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family: Arial, sans-serif;
+                background: #f5f5f5;
+                color: #333;
+                line-height: 1.5;
+            }
+            nav { background: #2c3e50; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        nav a { color: white; text-decoration: none; margin-left: 1.5rem; }
+        nav .brand { color: white; font-weight: bold; font-size: 1.2rem; }
+            .container {
+                max-width: 900px;
+                margin: 2rem auto;
+                padding: 0 1rem;
+            }
+            .back-link {
+                color: #2980b9;
+                text-decoration: none;
+                font-size: 0.9rem;
+                display: inline-block;
+                margin-bottom: 1rem;
+            }
+            .card {
+                background: white;
+                border-radius: 8px;
+                padding: 1.5rem;
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+                max-width: 460px;
+            }
+            .card h2 {
+                font-size: 1.3rem;
+                margin-bottom: 0.75rem;
+            }
+            .warning-box {
+                background: #fff3cd;
+                border: 1px solid #ffc107;
+                border-radius: 6px;
+                padding: 1rem;
+                margin: 1rem 0;
+                font-size: 0.9rem;
+                color: #856404;
+            }
+            .summary-box {
+                background: #f8f9fa;
+                border-radius: 6px;
+                padding: 0.75rem 1rem;
+                margin-bottom: 1rem;
+                font-size: 0.9rem;
+            }
+            .summary-box p {
+                margin-bottom: 0.25rem;
+                color: #555;
+            }
+            .summary-box strong {
+                color: #2c3e50;
+            }
+            .form-actions {
+                display: flex;
+                gap: 0.75rem;
+                margin-top: 1.5rem;
+            }
+            .btn {
+                display: inline-block;
+                padding: 0.5rem 1.2rem;
+                border-radius: 4px;
+                border: none;
+                cursor: pointer;
+                font-size: 0.9rem;
+                text-decoration: none;
+                transition: opacity 0.2s;
+            }
+            .btn:hover {
+                opacity: 0.85;
+            }
+            .btn-danger {
+                background: #e74c3c;
+                color: white;
+            }
+            .btn-secondary {
+                background: #95a5a6;
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <span class="brand">Budgeting</span>
+            <div>
+                <a href="{% url "dashboard" %}">Dashboard</a>
+                <a href="{% url 'saving-goals-list' %}">Goals</a>
+                <a href="{% url "transactions:list" %}">Transactions</a>
+                <a href="{% url 'budgets:budget_list' %}">Budgets</a>
+                <a href="{% url 'profile' %}">Profile</a>
+            </div>
+        </nav>
+        <div class="container">
+            <a href="{% url 'transactions:list' %}" class="back-link">← Back</a>
+            <div class="card">
+                <h2>Delete Transaction</h2>
+                <div class="warning-box">
+                    ⚠️ This action cannot be undone. The transaction will be
+                    permanently removed from your history.
+                </div>
+
+                <div class="summary-box">
+                    <p>
+                        <strong>Date:</strong> {{object.date|date:"M d, Y H:i"}}
+                    </p>
+                    <p>
+                        <strong>Type:</strong>
+                        {{object.get_transaction_type_display}}
+                    </p>
+                    <p>
+                        <strong>Description:</strong> {{ object.description }}
+                    </p>
+                    <p><strong>Amount:</strong> ${{ object.amount }}</p>
+                    <p>
+                        <strong>Category:</strong>
+                        {{object.category.name|default:"—" }}
+                    </p>
+                    {% if object.savings_goal %}
+                    <p style="color: #e74c3c; margin-top: 0.5rem">
+                        <strong>⚠️ Linked Goal:</strong>
+                        "{{object.savings_goal.goal_name }}" will be reduced by
+                        ${{object.amount }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-danger">
+                            Yes, Delete
+                        </button>
+                        <a
+                            href="{% url 'transactions:list' %}"
+                            class="btn btn-secondary"
+                            >Cancel</a
+                        >
+                    </div>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>

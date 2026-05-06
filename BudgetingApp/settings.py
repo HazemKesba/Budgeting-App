@@ -93,7 +93,7 @@ AUTH_USER_MODEL = "users.CustomUser"
 
 
 # Login redirect URL
-LOGIN_REDIRECT_URL = "dashboard"
+LOGIN_REDIRECT_URL = "dashboard/"
 LOGIN_URL = "/auth/login/"
 
 # Password validation
@@ -131,3 +131,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+import os
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
