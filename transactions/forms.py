@@ -6,12 +6,12 @@ class TransactionForm(forms.Form):
     transaction_type = forms.ChoiceField(choices=TRANSACTION_TYPES, widget=forms.RadioSelect)
     amount = forms.DecimalField(max_digits=12, decimal_places=2)
     description = forms.CharField(max_length=200)
-    category = forms.ChoiceField(choices=[])
+    category = forms.ChoiceField(choices=[] ,required=False)
     date = forms.DateTimeField(widget=forms.DateTimeInput(attrs={"type": "datetime-local"}))
     payment_method = forms.ChoiceField(choices=PAYMENT_METHODS)
 
     note = forms.CharField(widget=forms.Textarea, required=False)
-    savings_goal = forms.ChoiceField(widget=forms.SelectMultiple(attrs={"id": "goals-menu"}), choices=[], required=False, empty_label="None (optional)")
+    savings_goal = forms.ChoiceField(choices=[], required=False, label="None (optional)")
 
     new_category = forms.CharField(max_length=50, required=False, label="Or create a new category")
 
@@ -26,7 +26,7 @@ class TransactionForm(forms.Form):
 
             try:
                 from saving_goals.models import SavingGoal
-                goals = SavingGoal.objects.filter(user=user, is_active=True).values_list("id", "goal_name")
+                goals = SavingGoal.objects.filter(user=user).exclude(status='completed').values_list('id', 'goal_name')
                 self.fields["savings_goal"].choices = [('', 'None (optional)')] + list(goals)
             except ImportError:
                 self.fields['savings_goal'].widget = forms.HiddenInput()
@@ -42,7 +42,7 @@ class TransactionForm(forms.Form):
             raise forms.ValidationError('Saving goals can only be linked to transactions of type (Income).')
         
         if new_category and not category:
-            cleaned_data['new_category'] = new_category.strip()
+            cleaned_data['new_category_name'] = new_category.strip()
         elif not new_category and not category:
             raise forms.ValidationError('A category must be added.')
         

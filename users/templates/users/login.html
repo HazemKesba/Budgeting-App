@@ -1,6 +1,60 @@
 {% extends "users/base.html" %} {% block content %}
-<form method="post">
-    {% csrf_token %} {{ form.as_p }}
-    <button type="submit">Login</button>
-</form>
-{% endblock content %}
+<div
+    class="container"
+    style="
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 70vh;
+    "
+>
+    <div class="card">
+        <h2>Login to Your Account</h2>
+        <form method="post">
+            {% csrf_token %} {% if form.non_field_errors %}
+            <div class="message error">{{ form.non_field_errors.0 }}</div>
+            {% endif %}
+
+            <div class="field">
+                <label for="{{ form.username.id_for_label }}">Email</label>
+                {{ form.username }} {% if form.username.errors %}
+                <div class="hint" style="color: #e74c3c">
+                    {{ form.username.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="field">
+                <label for="{{ form.password.id_for_label }}">Password</label>
+                {{ form.password }} {% if form.password.errors %}
+                <div class="hint" style="color: #e74c3c">
+                    {{ form.password.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-actions">
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                    style="width: 100%"
+                >
+                    Login
+                </button>
+            </div>
+        </form>
+
+        <p
+            style="
+                margin-top: 1.5rem;
+                font-size: 0.85rem;
+                color: #555;
+                text-align: center;
+            "
+        >
+            Don't have an account?
+            <a href="{% url 'signup' %}" style="color: #2980b9">Sign up</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

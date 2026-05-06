@@ -93,7 +93,7 @@ AUTH_USER_MODEL = "users.CustomUser"
 
 
 # Login redirect URL
-LOGIN_REDIRECT_URL = "dashboard"
+LOGIN_REDIRECT_URL = "dashboard/"
 LOGIN_URL = "/auth/login/"
 
 # Password validation

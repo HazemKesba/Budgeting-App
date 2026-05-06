@@ -1,0 +1,211 @@
+<!doctype html>
+<html>
+    <head>
+        <title>
+            {% if form.initial.transaction_type %}Edit{% else %}Add{% endif %}
+            Transaction
+        </title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family: Arial, sans-serif;
+                background: #f5f5f5;
+                color: #333;
+                line-height: 1.5;
+            }
+            nav { background: #2c3e50; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        nav a { color: white; text-decoration: none; margin-left: 1.5rem; }
+        nav .brand { color: white; font-weight: bold; font-size: 1.2rem; }
+            .container {
+                max-width: 900px;
+                margin: 2rem auto;
+                padding: 0 1rem;
+            }
+            .back-link {
+                color: #2980b9;
+                text-decoration: none;
+                font-size: 0.9rem;
+                display: inline-block;
+                margin-bottom: 1rem;
+            }
+            .card {
+                background: white;
+                border-radius: 8px;
+                padding: 1.5rem;
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+                max-width: 500px;
+            }
+            .card h2 {
+                font-size: 1.3rem;
+                margin-bottom: 1.5rem;
+            }
+            .field {
+                margin-bottom: 1rem;
+            }
+            .field label {
+                display: block;
+                font-size: 0.85rem;
+                color: #555;
+                margin-bottom: 0.3rem;
+                font-weight: 500;
+            }
+            .field input,
+            .field select,
+            .field textarea {
+                width: 100%;
+                padding: 0.5rem 0.75rem;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 0.95rem;
+                font-family: inherit;
+            }
+            .field input:focus,
+            .field select:focus,
+            .field textarea:focus {
+                outline: none;
+                border-color: #2980b9;
+            }
+            .field input[type="radio"] {
+                width: auto;
+                margin-right: 0.5rem;
+            }
+            .field .hint {
+                font-size: 0.75rem;
+                color: #999;
+                margin-top: 0.25rem;
+            }
+            .field .errorlist {
+                color: #e74c3c;
+                font-size: 0.75rem;
+                margin-top: 0.25rem;
+                list-style: none;
+                padding-left: 0;
+            }
+            .form-actions {
+                display: flex;
+                gap: 0.75rem;
+                margin-top: 1.5rem;
+            }
+            .btn {
+                display: inline-block;
+                padding: 0.5rem 1.2rem;
+                border-radius: 4px;
+                border: none;
+                cursor: pointer;
+                font-size: 0.9rem;
+                text-decoration: none;
+                transition: opacity 0.2s;
+            }
+            .btn:hover {
+                opacity: 0.85;
+            }
+            .btn-primary {
+                background: #2980b9;
+                color: white;
+            }
+            .btn-secondary {
+                background: #95a5a6;
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <span class="brand">Budgeting</span>
+            <div>
+                <a href="#">Dashboard</a>
+                <a href="{% url 'saving-goals-list' %}">Goals</a>
+                <a href="{% url "transactions:list" %}">Transactions</a>
+                <a href="#">Budgets</a>
+            </div>
+        </nav>
+        <div class="container">
+            <a href="{% url 'transactions:list' %}" class="back-link"
+                >← Back to Transactions</a
+            >
+            <div class="card">
+                <h2>
+                    {% if form.initial.transaction_type %}Edit{% else %}Add
+                    New{% endif %} Transaction
+                </h2>
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="field">
+                        {{ form.transaction_type.label_tag }}
+                        {{form.transaction_type }}
+                        {{form.transaction_type.errors }}
+                    </div>
+
+                    <div class="field">
+                        {{ form.amount.label_tag }} {{ form.amount }}
+                        {{form.amount.errors }}
+                    </div>
+
+                    <div class="field">
+                        {{ form.description.label_tag }} {{ form.description }}
+                        {{ form.description.errors }}
+                    </div>
+
+                    <div class="field">
+                        {{ form.category.label_tag }} {{ form.category }}
+                        <div
+                            style="
+                                margin-top: 0.5rem;
+                                font-size: 0.85rem;
+                                color: #555;
+                            "
+                        >
+                            {{ form.new_category }}
+                            <label
+                                for="{{ form.new_category.id_for_label }}"
+                                style="
+                                    display: inline;
+                                    font-weight: 400;
+                                    cursor: pointer;
+                                "
+                                >Or create new category</label
+                            >
+                        </div>
+                        {{ form.category.errors }}
+                    </div>
+
+                    <div class="field">
+                        {{ form.date.label_tag }} {{ form.date }}
+                        {{form.date.errors }}
+                    </div>
+
+                    <div class="field">
+                        {{ form.payment_method.label_tag }}
+                        {{form.payment_method }}
+                    </div>
+
+                    <div class="field">
+                        {{ form.note.label_tag }} {{ form.note }}
+                        <div class="hint">Optional</div>
+                    </div>
+
+                    <div class="field">
+                        {{ form.savings_goal.label_tag }} {{ form.savings_goal}}
+                        <div class="hint">Only for income transactions</div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            Save Transaction
+                        </button>
+                        <a
+                            href="{% url 'transactions:list' %}"
+                            class="btn btn-secondary"
+                            >Cancel</a
+                        >
+                    </div>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>
