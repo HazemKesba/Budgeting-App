@@ -1,6 +1,80 @@
 {% extends "users/base.html" %} {% block content %}
-<form method="post">
-    {% csrf_token %} {{ form.as_p }}
-    <button type="submit">Sign up</button>
-</form>
-{% endblock content %}
+<div
+    class="container"
+    style="
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 70vh;
+    "
+>
+    <div class="card">
+        <h2>Create Your Account</h2>
+        <form method="post">
+            {% csrf_token %} {% if form.non_field_errors %}
+            <div class="message error">{{ form.non_field_errors.0 }}</div>
+            {% endif %}
+
+            <div class="field">
+                <label for="{{ form.full_name.id_for_label }}">Full Name</label>
+                {{ form.full_name }} {% if form.full_name.errors %}
+                <div class="hint" style="color: #e74c3c">
+                    {{ form.full_name.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="field">
+                <label for="{{ form.email.id_for_label }}">Email</label>
+                {{ form.email }} {% if form.email.errors %}
+                <div class="hint" style="color: #e74c3c">
+                    {{ form.email.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="field">
+                <label for="{{ form.password.id_for_label }}">Password</label>
+                {{ form.password }} {% if form.password.errors %}
+                <div class="hint" style="color: #e74c3c">
+                    {% for err in form.password.errors %}{{ err }}{% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="field">
+                <label for="{{ form.confirm_password.id_for_label }}"
+                    >Confirm Password</label
+                >
+                {{ form.confirm_password }} {% if form.confirm_password.errors%}
+                <div class="hint" style="color: #e74c3c">
+                    {{ form.confirm_password.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-actions">
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                    style="width: 100%"
+                >
+                    Sign Up
+                </button>
+            </div>
+        </form>
+
+        <p
+            style="
+                margin-top: 1.5rem;
+                font-size: 0.85rem;
+                color: #555;
+                text-align: center;
+            "
+        >
+            Already have an account?
+            <a href="{% url 'login' %}" style="color: #2980b9">Login</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
