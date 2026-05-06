@@ -1,7 +1,7 @@
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 from .models import Transaction, Category
-from django.db.models import F
+from django.db.models import F, Q, Sum
 
 class TransactionService:
     @classmethod
@@ -114,6 +114,30 @@ class TransactionService:
         # 3️⃣ Delete transaction
         txn.delete()
         print("✅ Transaction deleted. Transaction will commit if no errors follow.")
+
+    @classmethod
+    def get_dashboard_stats(cls, user):
+        """Calculate balance, income, expense in 1 optimized query"""
+        stats = Transaction.objects.filter(user=user).aggregate(
+            total_income=Sum('amount', filter=Q(transaction_type='income')),
+            total_expense=Sum('amount', filter=Q(transaction_type='expense'))
+        )
+        
+        total_income = stats['total_income'] or 0
+        total_expense = stats['total_expense'] or 0
+        balance = total_income - total_expense
+        
+        return {
+            'balance': balance,
+            'total_income': total_income,
+            'total_expense': total_expense
+        }
+    
+    @classmethod
+    def get_recent_transactions(cls, user, limit=10):
+        return Transaction.objects.filter(user=user) \
+            .select_related('category') \
+            .order_by('-date')[:limit]
 
     @classmethod
     def _adjust_goal_balance(cls, txn, old_type, old_amount, old_goal):

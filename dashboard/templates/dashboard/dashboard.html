@@ -1,12 +1,170 @@
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Document</title>
-    </head>
-    <body>
-        <p>dashboard</p>
-        {{ name }}
-    </body>
-</html>
+{% extends "dashboard/base.html" %} {% block content %}
+<style>
+    /* Flexbox Recent Transactions */
+    .recent-txn-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .txn-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.85rem 0;
+        border-bottom: 1px solid #f0f0f0;
+        gap: 1rem;
+        transition: background 0.2s;
+    }
+    .txn-item:last-child {
+        border-bottom: none;
+    }
+    .txn-item:hover {
+        background: #fafbfc;
+        border-radius: 6px;
+        padding: 0.85rem 0.5rem;
+        margin: 0 -0.5rem;
+    }
+
+    .txn-left {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        min-width: 0;
+        flex: 1;
+    }
+    .txn-date {
+        font-size: 0.75rem;
+        color: #888;
+    }
+    .txn-desc {
+        font-size: 0.9rem;
+        color: #2c3e50;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .txn-category {
+        font-size: 0.7rem;
+        color: #555;
+        background: #f0f2f5;
+        padding: 2px 8px;
+        border-radius: 4px;
+        width: fit-content;
+    }
+    .txn-right {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-shrink: 0;
+    }
+    .txn-amount {
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    @media (max-width: 480px) {
+        .txn-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        .txn-right {
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
+</style>
+
+<div class="container">
+    <div class="page-header">
+        <h1>Dashboard</h1>
+        <a href="{% url 'transactions:add' %}" class="btn btn-primary"
+            >+ Add Transaction</a
+        >
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="card" style="margin-top: 1rem">
+            <div class="stat-label">Current Balance</div>
+            <div
+                class="stat-value"
+                style="color: {% if stats.balance >= 0 %}#27ae60{% else %}#e74c3c{% endif %};"
+            >
+                ${{ stats.balance|floatformat:2 }}
+            </div>
+        </div>
+        <div class="card" style="margin-top: 1rem">
+            <div class="stat-label">Total Income</div>
+            <div class="stat-value" style="color: #27ae60">
+                +${{ stats.total_income|floatformat:2 }}
+            </div>
+        </div>
+        <div class="card" style="margin-top: 1rem">
+            <div class="stat-label">Total Expenses</div>
+            <div class="stat-value" style="color: #e74c3c">
+                -${{ stats.total_expense|floatformat:2 }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions (Flexbox) -->
+    <div class="card" style="margin-top: 1.5rem; max-width: 50vw">
+        <div
+            style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1rem;
+            "
+        >
+            <h2 style="font-size: 1.2rem; margin: 0">Recent Transactions</h2>
+            {% if recent_transactions %}
+            <a
+                href="{% url 'transactions:list' %}"
+                style="
+                    font-size: 0.85rem;
+                    color: #2980b9;
+                    text-decoration: none;
+                "
+                >View All →</a
+            >
+            {% endif %}
+        </div>
+
+        {% if recent_transactions %}
+        <div class="recent-txn-list">
+            {% for txn in recent_transactions %}
+            <div class="txn-item">
+                <div class="txn-left">
+                    <span class="txn-date">{{ txn.date|date:"M d, Y" }}</span>
+                    <span class="txn-desc">{{ txn.description }}</span>
+                    {% if txn.category %}
+                    <span class="txn-category">{{ txn.category.name }}</span>
+                    {% endif %}
+                </div>
+                <div class="txn-right">
+                    <span
+                        class="badge {% if txn.transaction_type == 'income' %}badge-income{% else %}badge-expense{% endif %}"
+                    >
+                        {{ txn.get_transaction_type_display }}
+                    </span>
+                    <span
+                        class="txn-amount {% if txn.transaction_type == 'income' %}amount-income{% else %}amount-expense{% endif %}"
+                    >
+                        {% if txn.transaction_type == 'expense' %} -
+                        {%endif%}${{ txn.amount }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding: 2rem 0">
+            No transactions yet. Click "+ Add Transaction" to get started.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
