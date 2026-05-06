@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Budgeting{% endblock %}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; color: #333; }
+        nav { background: #2c3e50; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        nav a { color: white; text-decoration: none; margin-left: 1.5rem; }
+        nav .brand { color: white; font-weight: bold; font-size: 1.2rem; }
+        .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        .messages { margin-bottom: 1rem; }
+        .message { padding: 0.75rem 1rem; border-radius: 4px; margin-bottom: 0.5rem; }
+        .message.success { background: #d4edda; color: #155724; }
+        .message.error   { background: #f8d7da; color: #721c24; }
+        .btn { display: inline-block; padding: 0.5rem 1.2rem; border-radius: 4px; border: none; cursor: pointer; font-size: 0.9rem; text-decoration: none; }
+        .btn-primary  { background: #2980b9; color: white; }
+        .btn-danger   { background: #e74c3c; color: white; }
+        .btn-secondary{ background: #95a5a6; color: white; }
+        .btn:hover { opacity: 0.85; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav>
+        <span class="brand">Budgeting</span>
+        <div>
+            <a href="#">Dashboard</a>
+            <a href="{% url 'saving-goals-list' %}">Goals</a>
+            <a href="#">Transactions</a>
+            <a href="{% url 'budgets:budget_list' %}">Budgets</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
