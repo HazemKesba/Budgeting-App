@@ -1,45 +1,84 @@
 {% extends 'base.html' %}
-
 {% block title %}Budgets{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .page-header h1 { font-size: 1.5rem; }
+    .budgets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+    .budget-card { background: white; border-radius: 8px; padding: 1.2rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .budget-card h3 { font-size: 1rem; margin-bottom: 0.4rem; }
+    .budget-card .dates { font-size: 0.8rem; color: #888; margin-bottom: 0.75rem; }
+    .amounts { display: flex; justify-content: space-between; font-size: 0.85rem; color: #555; margin-bottom: 0.3rem; }
+    .progress-track { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; margin-bottom: 0.4rem; }
+    .progress-fill          { height: 100%; border-radius: 4px; background: #2980b9; }
+    .progress-fill.warning  { background: #e67e22; }
+    .progress-fill.danger   { background: #e74c3c; }
+    .progress-pct { font-size: 0.8rem; text-align: right; color: #555; margin-bottom: 0.5rem; }
+    .progress-pct.warning   { color: #e67e22; }
+    .progress-pct.danger    { color: #e74c3c; }
+    .alert-msg { font-size: 0.8rem; color: #856404; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 0.4rem 0.6rem; margin-bottom: 0.75rem; }
+    .card-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+    .empty-state { text-align: center; padding: 3rem; color: #888; }
+</style>
+{% endblock %}
 
 {% block content %}
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+<div class="page-header">
     <h1>Budgets</h1>
     <a href="{% url 'budgets:budget_create' %}" class="btn btn-primary">+ Add Budget</a>
 </div>
 
-{% for budget in budgets %}
-<div style="background: white; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-    <div style="display: flex; justify-content: space-between;">
+<div class="budgets-grid">
+    {% for budget in budgets %}
+    <div class="budget-card">
+
         <h3>{{ budget.category.name }}</h3>
-        <div>
-            <a href="{% url 'budgets:budget_edit' budget.pk %}" class="btn btn-secondary">Edit</a>
+        <div class="dates">{{ budget.start_date }} – {{ budget.end_date }}</div>
+
+        <div class="amounts">
+            <span>Spent</span>
+            <span><strong>${{ budget.get_spent }}</strong></span>
+        </div>
+        <div class="amounts">
+            <span>Budget</span>
+            <span><strong>${{ budget.amount }}</strong></span>
+        </div>
+        <div class="amounts">
+            <span>Remaining</span>
+            <span><strong>${{ budget.get_remaining }}</strong></span>
+        </div>
+
+        <div class="progress-track">
+            <div class="progress-fill {{ budget.get_status }}"
+     style="width: {{ budget.get_progress_percent }}%;"></div>
+        </div>
+
+        <div class="progress-pct {{ budget.get_status }}">
+            Progress {{ budget.get_progress_percent }}%
+        </div>
+
+        {% if budget.get_status == 'warning' or budget.get_status == 'danger' %}
+        <div class="alert-msg">
+            ⚠️ Budget alert: {{ budget.get_progress_percent }}% of limit reached
+        </div>
+        {% endif %}
+
+        <div class="card-actions">
+            <a href="{% url 'budgets:budget_detail' budget.pk %}" class="btn btn-secondary">View</a>
+            <a href="{% url 'budgets:budget_edit' budget.pk %}" class="btn btn-primary">Edit</a>
             <a href="{% url 'budgets:budget_delete' budget.pk %}" class="btn btn-danger">Delete</a>
         </div>
-    </div>
-    <p>{{ budget.start_date }} - {{ budget.end_date }}</p>
-    <p>Spent: ${{ budget.get_spent }}</p>
-    <p>Budget: ${{ budget.amount }}</p>
-    <p>Remaining: ${{ budget.get_remaining }}</p>
 
-    <!-- Progress Bar -->
-    <div style="background: #eee; border-radius: 4px; height: 8px; margin-top: 0.5rem;">
-        <div style="
-            width: {{ budget.get_progress_percent }}%;
-            height: 8px;
-            border-radius: 4px;
-            background: {% if budget.get_status == 'danger' %}#e74c3c{% elif budget.get_status == 'warning' %}#f39c12{% else %}#2980b9{% endif %};">
-        </div>
     </div>
-    <p style="text-align: right; font-size: 0.85rem;">{{ budget.get_progress_percent }}%</p>
-
-    {% if budget.get_status == 'warning' or budget.get_status == 'danger' %}
-    <p style="color: #f39c12;">⚠️ Budget alert: {{ budget.get_progress_percent }}% of limit reached</p>
-    {% endif %}
+    {% empty %}
+    <div class="empty-state" style="grid-column: 1/-1;">
+        <p>No budgets yet.</p>
+        <br>
+        <a href="{% url 'budgets:budget_create' %}" class="btn btn-primary">Create your first budget</a>
+    </div>
+    {% endfor %}
 </div>
-{% empty %}
-<p>No budgets yet. <a href="{% url 'budgets:budget_create' %}">Create one!</a></p>
-{% endfor %}
 
 {% endblock %}

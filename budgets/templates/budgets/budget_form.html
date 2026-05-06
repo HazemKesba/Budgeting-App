@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Budget{% endblock %}
+
+{% block extra_css %}
+<style>
+    .back-link { color: #2980b9; text-decoration: none; font-size: 0.9rem; display: inline-block; margin-bottom: 1rem; }
+    .card { background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); max-width: 500px; }
+    .card h2 { font-size: 1.3rem; margin-bottom: 1.5rem; }
+    .field { margin-bottom: 1rem; }
+    .field label { display: block; font-size: 0.85rem; color: #555; margin-bottom: 0.3rem; font-weight: 500; }
+    .field input, .field select { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.95rem; font-family: Arial, sans-serif; }
+    .field input:focus, .field select:focus { outline: none; border-color: #2980b9; }
+    .field .hint { font-size: 0.75rem; color: #999; margin-top: 0.25rem; }
+    .field .error { font-size: 0.8rem; color: #e74c3c; margin-top: 0.25rem; }
+    .form-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<a href="{% url 'budgets:budget_list' %}" class="back-link">← Back to Budgets</a>
+
+<div class="card">
+    <h2>{{ action }} Budget</h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="field">
+    <label>Category</label>
+    {{ form.category }}
+    {% if form.category.errors %}<div class="error">{{ form.category.errors }}</div>{% endif %}
+</div>
+
+        <div class="field">
+            <label>Budget Amount ($)</label>
+            <input type="number" name="amount" step="0.01" min="0.01" placeholder="0.00"
+                   value="{{ form.instance.amount|default:'' }}">
+            {% if form.amount.errors %}<div class="error">{{ form.amount.errors }}</div>{% endif %}
+        </div>
+
+        <div class="field">
+            <label>Start Date</label>
+            <input type="date" name="start_date"
+                   value="{{ form.instance.start_date|date:'Y-m-d'|default:'' }}">
+            {% if form.start_date.errors %}<div class="error">{{ form.start_date.errors }}</div>{% endif %}
+        </div>
+
+        <div class="field">
+            <label>End Date</label>
+            <input type="date" name="end_date"
+                   value="{{ form.instance.end_date|date:'Y-m-d'|default:'' }}">
+            {% if form.end_date.errors %}<div class="error">{{ form.end_date.errors }}</div>{% endif %}
+        </div>
+
+        <div class="field">
+            <label>Alert When Reached (%)</label>
+            <input type="number" name="alert_threshold" min="1" max="100"
+                   value="{{ form.instance.alert_threshold|default:80 }}">
+            <div class="hint">You'll receive a notification when spending reaches this percentage</div>
+        </div>
+
+        <div class="field">
+            <label>Spent ($) <span style="color:#999; font-weight:400;">(for testing)</span></label>
+            <input type="number" name="spent" step="0.01" min="0" placeholder="0.00"
+                   value="{{ form.instance.spent|default:0 }}">
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{ action }}</button>
+            <a href="{% url 'budgets:budget_list' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+
+    </form>
+</div>
+
+{% endblock %}
