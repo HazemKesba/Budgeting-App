@@ -39,6 +39,9 @@
         .pagination { display: flex; gap: 0.5rem; margin-top: 1.5rem; align-items: center; font-size: 0.9rem; }
         .pagination a { padding: 0.4rem 0.75rem; border: 1px solid #ddd; border-radius: 4px; text-decoration: none; color: #2980b9; }
         .pagination a:hover { background: #f8f9fa; }
+        .logout-form {display: inline; margin: 0; padding: 0;}
+        .logout-btn {background: none;border: none;color: #e07070;cursor: pointer;font-size: 1rem;font-family: Arial, sans-serif;padding: 0;margin-left: 1.5rem; text-decoration: none;display: inline;}
+        .logout-btn:hover {opacity: 0.85;}
     </style>
 </head>
 <body>
@@ -50,6 +53,10 @@
             <a href="{% url "transactions:list" %}">Transactions</a>
             <a href="{% url 'budgets:budget_list' %}">Budgets</a>
             <a href="{% url 'profile' %}">Profile</a>
+            <form method="post" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">Logout</button>
+            </form>
         </div>
     </nav>
     <div class="container">

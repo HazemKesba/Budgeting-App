@@ -7,8 +7,7 @@ class BudgetService:
     @staticmethod
     def get_user_budgets(user):
         """Get all budgets for a user with spending data attached."""
-        budgets = Budget.objects.filter(user=user).select_related('category')
-        return budgets
+        return Budget.objects.filter(user=user).select_related('category')
 
     @staticmethod
     def get_budget(pk, user):
@@ -32,6 +31,20 @@ class BudgetService:
     def delete_budget(budget):
         """Delete a budget."""
         budget.delete()
+
+    @staticmethod
+    def get_budget_summary(user):
+        """
+        Return summary counts for the user's budgets.
+        Used by the dashboard to show how many budgets are safe / near-limit / exceeded.
+        Returns a dict: {total, safe, warning, danger}
+        """
+        budgets = Budget.objects.filter(user=user).select_related('category')
+        summary = {'total': 0, 'safe': 0, 'warning': 0, 'danger': 0}
+        for b in budgets:
+            summary['total'] += 1
+            summary[b.get_status()] += 1
+        return summary
 
     @staticmethod
     def get_user_categories(user):
