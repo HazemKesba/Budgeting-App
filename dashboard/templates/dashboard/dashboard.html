@@ -1,170 +1,224 @@
-{% extends "dashboard/base.html" %} {% block content %}
+{% extends "dashboard/base.html" %}
+{% block title %}Dashboard – BudgetWise{% endblock %}
+
+{% block content %}
 <style>
-    /* Flexbox Recent Transactions */
-    .recent-txn-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-    .txn-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.85rem 0;
-        border-bottom: 1px solid #f0f0f0;
-        gap: 1rem;
-        transition: background 0.2s;
-    }
-    .txn-item:last-child {
-        border-bottom: none;
-    }
-    .txn-item:hover {
-        background: #fafbfc;
-        border-radius: 6px;
-        padding: 0.85rem 0.5rem;
-        margin: 0 -0.5rem;
-    }
+  /* ── Page Layout ── */
+  .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; }
+  .page-header h1 { font-size:1.5rem; }
 
-    .txn-left {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-        min-width: 0;
-        flex: 1;
-    }
-    .txn-date {
-        font-size: 0.75rem;
-        color: #888;
-    }
-    .txn-desc {
-        font-size: 0.9rem;
-        color: #2c3e50;
-        font-weight: 500;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .txn-category {
-        font-size: 0.7rem;
-        color: #555;
-        background: #f0f2f5;
-        padding: 2px 8px;
-        border-radius: 4px;
-        width: fit-content;
-    }
-    .txn-right {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        flex-shrink: 0;
-    }
-    .txn-amount {
-        font-weight: 600;
-        font-size: 0.95rem;
-    }
+  /* ── Stat Cards ── */
+  .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem; }
+  @media(max-width:600px){ .stats-grid{grid-template-columns:1fr;} }
+  .stat-card { background:white; border-radius:8px; padding:1.25rem 1.5rem;
+               box-shadow:0 1px 4px rgba(0,0,0,.08); }
+  .stat-label { font-size:.8rem; color:#888; text-transform:uppercase; letter-spacing:.5px; margin-bottom:.4rem; }
+  .stat-value { font-size:1.7rem; font-weight:700; }
 
-    @media (max-width: 480px) {
-        .txn-item {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.5rem;
-        }
-        .txn-right {
-            width: 100%;
-            justify-content: space-between;
-        }
-    }
+  /* ── Charts ── */
+  .charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem; }
+  @media(max-width:700px){ .charts-grid{grid-template-columns:1fr;} }
+  .chart-card { background:white; border-radius:8px; padding:1.25rem 1.5rem;
+                box-shadow:0 1px 4px rgba(0,0,0,.08); }
+  .chart-card h3 { font-size:1rem; color:#555; margin-bottom:1rem; }
+
+  /* ── Recent Transactions ── */
+  .recent-card { background:white; border-radius:8px; padding:1.25rem 1.5rem;
+                 box-shadow:0 1px 4px rgba(0,0,0,.08); }
+  .recent-card h3 { font-size:1rem; color:#555; margin-bottom:1rem; }
+  .txn-item { display:flex; justify-content:space-between; align-items:center;
+              padding:.7rem 0; border-bottom:1px solid #f0f0f0; gap:1rem; }
+  .txn-item:last-child { border-bottom:none; }
+  .txn-left { display:flex; flex-direction:column; gap:.2rem; flex:1; min-width:0; }
+  .txn-date  { font-size:.72rem; color:#aaa; }
+  .txn-desc  { font-size:.9rem; color:#2c3e50; font-weight:500;
+               white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .txn-cat   { font-size:.7rem; color:#555; background:#f0f2f5;
+               padding:2px 7px; border-radius:4px; width:fit-content; }
+  .txn-right { display:flex; align-items:center; gap:.6rem; flex-shrink:0; }
+  .txn-amount{ font-weight:600; font-size:.95rem; }
+  .badge { display:inline-block; padding:2px 9px; border-radius:10px;
+           font-size:.72rem; font-weight:500; }
+  .badge-income  { background:#d4edda; color:#155724; }
+  .badge-expense { background:#f8d7da; color:#721c24; }
+  .amount-income  { color:#27ae60; }
+  .amount-expense { color:#e74c3c; }
+  .empty-state { text-align:center; padding:2rem; color:#aaa; font-size:.9rem; }
+
+  .section-link { font-size:.82rem; color:#2980b9; text-decoration:none; }
+  .section-link:hover { text-decoration:underline; }
 </style>
 
-<div class="container">
-    <div class="page-header">
-        <h1>Dashboard</h1>
-        <a href="{% url 'transactions:add' %}" class="btn btn-primary"
-            >+ Add Transaction</a
-        >
-    </div>
-
-    <!-- Stats Grid -->
-    <div class="stats-grid">
-        <div class="card" style="margin-top: 1rem">
-            <div class="stat-label">Current Balance</div>
-            <div
-                class="stat-value"
-                style="color: {% if stats.balance >= 0 %}#27ae60{% else %}#e74c3c{% endif %};"
-            >
-                ${{ stats.balance|floatformat:2 }}
-            </div>
-        </div>
-        <div class="card" style="margin-top: 1rem">
-            <div class="stat-label">Total Income</div>
-            <div class="stat-value" style="color: #27ae60">
-                +${{ stats.total_income|floatformat:2 }}
-            </div>
-        </div>
-        <div class="card" style="margin-top: 1rem">
-            <div class="stat-label">Total Expenses</div>
-            <div class="stat-value" style="color: #e74c3c">
-                -${{ stats.total_expense|floatformat:2 }}
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Transactions (Flexbox) -->
-    <div class="card" style="margin-top: 1.5rem; max-width: 50vw">
-        <div
-            style="
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 1rem;
-            "
-        >
-            <h2 style="font-size: 1.2rem; margin: 0">Recent Transactions</h2>
-            {% if recent_transactions %}
-            <a
-                href="{% url 'transactions:list' %}"
-                style="
-                    font-size: 0.85rem;
-                    color: #2980b9;
-                    text-decoration: none;
-                "
-                >View All →</a
-            >
-            {% endif %}
-        </div>
-
-        {% if recent_transactions %}
-        <div class="recent-txn-list">
-            {% for txn in recent_transactions %}
-            <div class="txn-item">
-                <div class="txn-left">
-                    <span class="txn-date">{{ txn.date|date:"M d, Y" }}</span>
-                    <span class="txn-desc">{{ txn.description }}</span>
-                    {% if txn.category %}
-                    <span class="txn-category">{{ txn.category.name }}</span>
-                    {% endif %}
-                </div>
-                <div class="txn-right">
-                    <span
-                        class="badge {% if txn.transaction_type == 'income' %}badge-income{% else %}badge-expense{% endif %}"
-                    >
-                        {{ txn.get_transaction_type_display }}
-                    </span>
-                    <span
-                        class="txn-amount {% if txn.transaction_type == 'income' %}amount-income{% else %}amount-expense{% endif %}"
-                    >
-                        {% if txn.transaction_type == 'expense' %} -
-                        {%endif%}${{ txn.amount }}
-                    </span>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="empty-state" style="padding: 2rem 0">
-            No transactions yet. Click "+ Add Transaction" to get started.
-        </div>
-        {% endif %}
-    </div>
+<!-- ── Header ── -->
+<div class="page-header">
+  <h1>Dashboard</h1>
+  <a href="{% url 'transactions:add' %}" class="btn btn-primary">+ Add Transaction</a>
 </div>
+
+<!-- ── Stats ── -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Current Balance</div>
+    <div class="stat-value" style="color:{% if stats.balance >= 0 %}#27ae60{% else %}#e74c3c{% endif %}">
+      ${{ stats.balance|floatformat:2 }}
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Income</div>
+    <div class="stat-value" style="color:#27ae60">+${{ stats.total_income|floatformat:2 }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Expenses</div>
+    <div class="stat-value" style="color:#e74c3c">-${{ stats.total_expense|floatformat:2 }}</div>
+  </div>
+</div>
+
+<!-- Budget Summary from BudgetService -->
+{% if budget_summary.total %}
+<div class="stats-grid" style="margin-bottom:1.5rem;">
+  <div class="stat-card" style="border-left:4px solid #27ae60;">
+    <div class="stat-label">Budgets On Track</div>
+    <div class="stat-value" style="color:#27ae60;">{{ budget_summary.safe }}</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid #f39c12;">
+    <div class="stat-label">Near Limit</div>
+    <div class="stat-value" style="color:#f39c12;">{{ budget_summary.warning }}</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid #e74c3c;">
+    <div class="stat-label">Exceeded</div>
+    <div class="stat-value" style="color:#e74c3c;">{{ budget_summary.danger }}</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Charts ── -->
+<div class="charts-grid">
+  <div class="chart-card">
+    <h3>Expenses by Category</h3>
+    {% if pie_data != '[]' %}
+      <canvas id="pieChart" height="220"></canvas>
+    {% else %}
+      <div class="empty-state">No expense data yet.</div>
+    {% endif %}
+  </div>
+  <div class="chart-card">
+    <h3>Income vs Expenses – Last 6 Months</h3>
+    {% if bar_income != '[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]' %}
+      <canvas id="barChart" height="220"></canvas>
+    {% else %}
+      <div class="empty-state">No transaction history yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ── Recent Transactions ── -->
+<div class="recent-card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
+    <h3 style="margin:0;">Recent Transactions</h3>
+    {% if recent_transactions %}
+      <a href="{% url 'transactions:list' %}" class="section-link">View All →</a>
+    {% endif %}
+  </div>
+
+  {% if recent_transactions %}
+    {% for txn in recent_transactions %}
+    <div class="txn-item">
+      <div class="txn-left">
+        <span class="txn-date">{{ txn.date|date:"M d, Y" }}</span>
+        <span class="txn-desc">{{ txn.description }}</span>
+        {% if txn.category %}
+          <span class="txn-cat">{{ txn.category.name }}</span>
+        {% endif %}
+      </div>
+      <div class="txn-right">
+        <span class="badge {% if txn.transaction_type == 'income' %}badge-income{% else %}badge-expense{% endif %}">
+          {{ txn.get_transaction_type_display }}
+        </span>
+        <span class="txn-amount {% if txn.transaction_type == 'income' %}amount-income{% else %}amount-expense{% endif %}">
+          {% if txn.transaction_type == 'expense' %}-{% endif %}${{ txn.amount }}
+        </span>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">No transactions yet. Click "+ Add Transaction" to get started.</div>
+  {% endif %}
+</div>
+
+<!-- ── Chart.js ── -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+const PIE_COLORS = [
+  '#3498db','#e74c3c','#2ecc71','#f39c12',
+  '#9b59b6','#1abc9c','#e67e22','#34495e'
+];
+
+{% if pie_data != '[]' %}
+new Chart(document.getElementById('pieChart'), {
+  type: 'doughnut',
+  data: {
+    labels: {{ pie_labels|safe }},
+    datasets: [{
+      data: {{ pie_data|safe }},
+      backgroundColor: PIE_COLORS,
+      borderWidth: 2,
+      borderColor: '#fff'
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 14 } },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` $${ctx.parsed.toLocaleString('en-US', {minimumFractionDigits:2})}`
+        }
+      }
+    }
+  }
+});
+{% endif %}
+
+{% if bar_income != '[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]' %}
+new Chart(document.getElementById('barChart'), {
+  type: 'bar',
+  data: {
+    labels: {{ bar_labels|safe }},
+    datasets: [
+      {
+        label: 'Income',
+        data: {{ bar_income|safe }},
+        backgroundColor: 'rgba(46,204,113,.75)',
+        borderRadius: 4
+      },
+      {
+        label: 'Expenses',
+        data: {{ bar_expense|safe }},
+        backgroundColor: 'rgba(231,76,60,.75)',
+        borderRadius: 4
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 14 } },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString('en-US',{minimumFractionDigits:2})}`
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: v => '$' + v.toLocaleString()
+        }
+      }
+    }
+  }
+});
+{% endif %}
+</script>
 {% endblock %}

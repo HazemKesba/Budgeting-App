@@ -20,6 +20,9 @@
         .btn-danger   { background: #e74c3c; color: white; }
         .btn-secondary{ background: #95a5a6; color: white; }
         .btn:hover { opacity: 0.85; }
+        .logout-form {display: inline; margin: 0; padding: 0;}
+        .logout-btn {background: none;border: none;color: #e07070;cursor: pointer;font-size: 1rem;font-family: Arial, sans-serif;padding: 0;margin-left: 1.5rem; text-decoration: none;display: inline;}
+        .logout-btn:hover {opacity: 0.85;}
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -31,6 +34,10 @@
             <a href="{% url 'saving-goals-list' %}">Goals</a>
             <a href="{% url 'transactions:list' %}">Transactions</a>
             <a href="{% url 'budgets:budget_list' %}">Budgets</a>
+            <form method="post" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">Logout</button>
+            </form>
         </div>
     </nav>
 
