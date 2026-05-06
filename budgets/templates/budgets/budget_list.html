@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Budgets{% endblock %}
+
+{% block content %}
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h1>Budgets</h1>
+    <a href="{% url 'budgets:budget_create' %}" class="btn btn-primary">+ Add Budget</a>
+</div>
+
+{% for budget in budgets %}
+<div style="background: white; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <div style="display: flex; justify-content: space-between;">
+        <h3>{{ budget.category.name }}</h3>
+        <div>
+            <a href="{% url 'budgets:budget_edit' budget.pk %}" class="btn btn-secondary">Edit</a>
+            <a href="{% url 'budgets:budget_delete' budget.pk %}" class="btn btn-danger">Delete</a>
+        </div>
+    </div>
+    <p>{{ budget.start_date }} - {{ budget.end_date }}</p>
+    <p>Spent: ${{ budget.get_spent }}</p>
+    <p>Budget: ${{ budget.amount }}</p>
+    <p>Remaining: ${{ budget.get_remaining }}</p>
+
+    <!-- Progress Bar -->
+    <div style="background: #eee; border-radius: 4px; height: 8px; margin-top: 0.5rem;">
+        <div style="
+            width: {{ budget.get_progress_percent }}%;
+            height: 8px;
+            border-radius: 4px;
+            background: {% if budget.get_status == 'danger' %}#e74c3c{% elif budget.get_status == 'warning' %}#f39c12{% else %}#2980b9{% endif %};">
+        </div>
+    </div>
+    <p style="text-align: right; font-size: 0.85rem;">{{ budget.get_progress_percent }}%</p>
+
+    {% if budget.get_status == 'warning' or budget.get_status == 'danger' %}
+    <p style="color: #f39c12;">⚠️ Budget alert: {{ budget.get_progress_percent }}% of limit reached</p>
+    {% endif %}
+</div>
+{% empty %}
+<p>No budgets yet. <a href="{% url 'budgets:budget_create' %}">Create one!</a></p>
+{% endfor %}
+
+{% endblock %}
