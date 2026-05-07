@@ -1,3 +1,16 @@
+"""
+URL configuration for the budgets application.
+
+Maps URL routes to class-based views for managing budgets.
+All routes are namespaced under ``'budgets'`` for reverse URL resolution.
+
+Routes:
+    - ``/``: List all budgets for the current user.
+    - ``/create/``: Form to create a new budget.
+    - ``/<int:pk>/``: Detail view for a specific budget.
+    - ``/<int:pk>/edit/``: Form to edit an existing budget.
+    - ``/<int:pk>/delete/``: View to confirm and delete a budget.
+"""
 from django.urls import path
 from . import views
 

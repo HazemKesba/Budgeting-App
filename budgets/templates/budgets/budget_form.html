@@ -60,12 +60,6 @@
             <div class="hint">You'll receive a notification when spending reaches this percentage</div>
         </div>
 
-        <div class="field">
-            <label>Spent ($) <span style="color:#999; font-weight:400;">(for testing)</span></label>
-            <input type="number" name="spent" step="0.01" min="0" placeholder="0.00"
-                   value="{{ form.instance.spent|default:0 }}">
-        </div>
-
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">{{ action }}</button>
             <a href="{% url 'budgets:budget_list' %}" class="btn btn-secondary">Cancel</a>
