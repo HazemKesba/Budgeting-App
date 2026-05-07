@@ -4,12 +4,19 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
 class SignUpForm(forms.Form):
+    """Form for user registration with full name, email, and password validation."""
+    
     full_name = forms.CharField(widget=forms.TextInput(attrs={"autofocus": True}), max_length=150, required=True)
     email = forms.EmailField(required=True)
     password = forms.CharField(widget=forms.PasswordInput, required=True)
     confirm_password = forms.CharField(widget=forms.PasswordInput, required=True)
 
     def clean(self):
+        """Validate password match and enforce Django password complexity rules.
+        
+        Returns:
+            dict: The cleaned form data.
+        """
         cleaned_data = super().clean()
         password = cleaned_data.get("password")
         confirm_password = cleaned_data.get("confirm_password")
@@ -24,9 +31,10 @@ class SignUpForm(forms.Form):
             self.add_error("confirm_password", "Passwords do not match.")
 
         return cleaned_data
-    
 
 class EmailLoginForm(AuthenticationForm):
+    """Authentication form that uses email instead of username for login."""
+    
     username = forms.EmailField(
         widget=forms.EmailInput(attrs={"autofocus": True, "placeholder": "Email"}),
         label="Email"

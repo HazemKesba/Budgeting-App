@@ -1,21 +1,22 @@
+"""Form definitions for transaction creation and editing."""
 from django import forms
 from .models import Category, TRANSACTION_TYPES, PAYMENT_METHODS
 from django.db.models import Q
 
 class TransactionForm(forms.Form):
+    """Plain form for transaction data entry with dynamic dropdown population."""
     transaction_type = forms.ChoiceField(choices=TRANSACTION_TYPES, widget=forms.RadioSelect)
     amount = forms.DecimalField(max_digits=12, decimal_places=2)
     description = forms.CharField(max_length=200)
-    category = forms.ChoiceField(choices=[] ,required=False)
+    category = forms.ChoiceField(choices=[], required=False)
     date = forms.DateTimeField(widget=forms.DateTimeInput(attrs={"type": "datetime-local"}))
     payment_method = forms.ChoiceField(choices=PAYMENT_METHODS)
-
     note = forms.CharField(widget=forms.Textarea, required=False)
     savings_goal = forms.ChoiceField(choices=[], required=False, label="None (optional)")
-
     new_category = forms.CharField(max_length=50, required=False, label="Or create a new category")
 
     def __init__(self, *args, user=None, **kwargs):
+        """Initialize form fields and populate category/savings goal choices for the authenticated user."""
         super().__init__(*args, **kwargs)
 
         if user:
@@ -32,6 +33,7 @@ class TransactionForm(forms.Form):
                 self.fields['savings_goal'].widget = forms.HiddenInput()
 
     def clean(self):
+        """Validate form data, enforce category requirement, and restrict savings goals to income transactions."""
         cleaned_data = super().clean()
         transaction_type = cleaned_data.get('transaction_type')
         savings_goal = cleaned_data.get('savings_goal')

@@ -1,19 +1,26 @@
+"""Business logic layer for transactions, dashboard aggregates, and reporting."""
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 from .models import Transaction, Category
 from django.db.models import F, Q, Sum
 
 class TransactionService:
+    """Handles transaction CRUD operations, goal balance synchronization, and analytics."""
+
     @classmethod
     @transaction.atomic
     def create_transaction(cls, user, form_data: dict):
-        """
-        Create transaction + optionally update linked savings goal.
-        form_ cleaned_data from TransactionForm (plain Form)
+        """Create a transaction and update linked savings goal balance if applicable.
+        
+        Args:
+            user: Authenticated CustomUser instance.
+            form_ Cleaned dictionary from TransactionForm.
+            
+        Returns:
+            Transaction: The newly saved transaction instance.
         """
         from saving_goals.models import SavingGoal
         
-        # 1️⃣ Handle new category creation if requested
         category = None
         if form_data.get('new_category_name'):
             category, _ = Category.objects.get_or_create(
@@ -26,7 +33,6 @@ class TransactionService:
             except (Category.DoesNotExist, ValueError, TypeError):
                 category = None
         
-        # 2️⃣ Convert savings_goal ID (string) → SavingsGoal instance
         savings_goal = None
         goal_id = form_data.get('savings_goal')
         if goal_id and goal_id != '':
@@ -35,7 +41,6 @@ class TransactionService:
             except SavingGoal.DoesNotExist:
                 pass
         
-        # 3️⃣ Create the transaction
         txn = Transaction.objects.create(
             user=user,
             transaction_type=form_data['transaction_type'],
@@ -48,7 +53,6 @@ class TransactionService:
             savings_goal=savings_goal
         )
 
-        # 4️⃣ If income + linked to goal → update goal balance
         if txn.transaction_type == 'income' and txn.savings_goal:
             goal = txn.savings_goal
             goal.current_amount += txn.amount
@@ -59,14 +63,22 @@ class TransactionService:
     @classmethod
     @transaction.atomic
     def update_transaction(cls, txn_id, user, form_data: dict):
-        """Update transaction + adjust goal balance if needed"""
+        """Update an existing transaction and adjust goal balances if income linkage changed.
+        
+        Args:
+            txn_id: Primary key of the transaction to update.
+            user: Authenticated user owning the transaction.
+            form_ Cleaned dictionary from TransactionForm.
+            
+        Returns:
+            Transaction: The updated transaction instance.
+        """
         txn = Transaction.objects.get(id=txn_id, user=user)
         
         old_amount = txn.amount
         old_goal = txn.savings_goal
         old_type = txn.transaction_type
         
-        # Handle new category if requested
         category = None
         if form_data.get('new_category_name'):
             category, _ = Category.objects.get_or_create(
@@ -79,7 +91,6 @@ class TransactionService:
             except (Category.DoesNotExist, ValueError, TypeError):
                 category = None
         
-        # Update basic fields
         txn.transaction_type = form_data['transaction_type']
         txn.amount = form_data['amount']
         txn.description = form_data['description']
@@ -90,13 +101,21 @@ class TransactionService:
         txn.savings_goal = form_data.get('savings_goal') or None
         txn.save()
 
-        # 🔄 Adjust goal balance if income linkage changed
         cls._adjust_goal_balance(txn, old_type, old_amount, old_goal)
         return txn
 
     @classmethod
     @transaction.atomic
     def delete_transaction(cls, txn_id, user):
+        """Delete a transaction and atomically revert its contribution to a linked savings goal.
+        
+        Args:
+            txn_id: Primary key of the transaction to delete.
+            user: Authenticated user owning the transaction.
+            
+        Raises:
+            ValueError: If the goal balance update fails due to ownership mismatch.
+        """
         from django.db.models import F
         from saving_goals.models import SavingGoal
         from .models import Transaction
@@ -115,7 +134,14 @@ class TransactionService:
 
     @classmethod
     def get_dashboard_stats(cls, user):
-        """Calculate balance, income, expense in 1 optimized query"""
+        """Calculate real-time balance, total income, and total expenses for a user.
+        
+        Args:
+            user: Authenticated CustomUser instance.
+            
+        Returns:
+            dict: Dictionary containing 'balance', 'total_income', and 'total_expense'.
+        """
         stats = Transaction.objects.filter(user=user).aggregate(
             total_income=Sum('amount', filter=Q(transaction_type='income')),
             total_expense=Sum('amount', filter=Q(transaction_type='expense'))
@@ -130,16 +156,29 @@ class TransactionService:
 
     @classmethod
     def get_recent_transactions(cls, user, limit=10):
+        """Fetch the most recent transactions for dashboard display.
+        
+        Args:
+            user: Authenticated CustomUser instance.
+            limit: Maximum number of transactions to return (default: 10).
+            
+        Returns:
+            QuerySet: Ordered Transaction queryset with pre-fetched categories.
+        """
         return Transaction.objects.filter(user=user) \
             .select_related('category') \
             .order_by('-date')[:limit]
 
     @classmethod
     def get_expense_by_category(cls, user, limit=8):
-        """
-        Return a list of dicts {category__name, total} for the user's expenses,
-        grouped by category, ordered by total descending.
-        Used by the dashboard pie chart.
+        """Aggregate expenses by category for reporting/pie charts.
+        
+        Args:
+            user: Authenticated CustomUser instance.
+            limit: Maximum number of categories to return (default: 8).
+            
+        Returns:
+            list[dict]: List of dictionaries with 'category__name' and 'total' keys.
         """
         return list(
             Transaction.objects
@@ -152,10 +191,14 @@ class TransactionService:
 
     @classmethod
     def get_monthly_income_vs_expense(cls, user, months=6):
-        """
-        Return a list of dicts for the last `months` calendar months:
-          {label: 'Jan 2025', income: Decimal, expense: Decimal}
-        Used by the dashboard bar chart.
+        """Calculate monthly income vs expense aggregates for the last N months.
+        
+        Args:
+            user: Authenticated CustomUser instance.
+            months: Number of trailing months to calculate (default: 6).
+            
+        Returns:
+            list[dict]: List of dictionaries with 'label', 'income', and 'expense' keys.
         """
         from django.utils import timezone
         from datetime import timedelta
@@ -189,7 +232,14 @@ class TransactionService:
 
     @classmethod
     def _adjust_goal_balance(cls, txn, old_type, old_amount, old_goal):
-        """Helper: recalculate goal balance after transaction update"""
+        """Internal helper to recalculate savings goal balances after transaction updates.
+        
+        Args:
+            txn: Updated Transaction instance.
+            old_type: Previous transaction_type value.
+            old_amount: Previous amount value.
+            old_goal: Previous savings_goal instance.
+        """
         if old_type == 'income' and old_goal and old_goal.user == txn.user:
             old_goal.current_amount -= old_amount
             old_goal.save(update_fields=['current_amount'])
