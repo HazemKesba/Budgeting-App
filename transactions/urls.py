@@ -1,3 +1,4 @@
+"""URL routing for transaction CRUD operations."""
 from django.urls import path
 from .views import TransactionListView, TransactionCreateView, TransactionUpdateView, TransactionDeleteView
 

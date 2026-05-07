@@ -52,22 +52,25 @@
                     <h1 class="modulename">
 <a href="./../transactions.html">transactions</a><wbr>.urls    </h1>
 
-                
+                        <div class="docstring"><p>URL routing for transaction CRUD operations.</p>
+</div>
+
                         <input id="mod-urls-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 
                         <label class="view-source-button" for="mod-urls-view-source"><span>View Source</span></label>
 
-                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos"> 1</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">path</span>
-</span><span id="L-2"><a href="#L-2"><span class="linenos"> 2</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">.views</span><span class="w"> </span><span class="kn">import</span> <span class="n">TransactionListView</span><span class="p">,</span> <span class="n">TransactionCreateView</span><span class="p">,</span> <span class="n">TransactionUpdateView</span><span class="p">,</span> <span class="n">TransactionDeleteView</span>
-</span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a>
-</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="n">app_name</span> <span class="o">=</span> <span class="s1">&#39;transactions&#39;</span>
-</span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a>
-</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a>    <span class="n">path</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">TransactionListView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;list&#39;</span><span class="p">),</span>
-</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a>    <span class="n">path</span><span class="p">(</span><span class="s1">&#39;add/&#39;</span><span class="p">,</span> <span class="n">TransactionCreateView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;add&#39;</span><span class="p">),</span>
-</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a>    <span class="n">path</span><span class="p">(</span><span class="s1">&#39;&lt;int:pk&gt;/edit/&#39;</span><span class="p">,</span> <span class="n">TransactionUpdateView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;edit&#39;</span><span class="p">),</span>
-</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a>    <span class="n">path</span><span class="p">(</span><span class="s1">&#39;&lt;int:pk&gt;/delete/&#39;</span><span class="p">,</span> <span class="n">TransactionDeleteView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;delete&#39;</span><span class="p">),</span>
-</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a><span class="p">]</span>
+                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos"> 1</span></a><span class="sd">&quot;&quot;&quot;URL routing for transaction CRUD operations.&quot;&quot;&quot;</span>
+</span><span id="L-2"><a href="#L-2"><span class="linenos"> 2</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">path</span>
+</span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">.views</span><span class="w"> </span><span class="kn">import</span> <span class="n">TransactionListView</span><span class="p">,</span> <span class="n">TransactionCreateView</span><span class="p">,</span> <span class="n">TransactionUpdateView</span><span class="p">,</span> <span class="n">TransactionDeleteView</span>
+</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a>
+</span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a><span class="n">app_name</span> <span class="o">=</span> <span class="s1">&#39;transactions&#39;</span>
+</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a>
+</span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a><span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a>    <span class="n">path</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">TransactionListView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;list&#39;</span><span class="p">),</span>
+</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a>    <span class="n">path</span><span class="p">(</span><span class="s1">&#39;add/&#39;</span><span class="p">,</span> <span class="n">TransactionCreateView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;add&#39;</span><span class="p">),</span>
+</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a>    <span class="n">path</span><span class="p">(</span><span class="s1">&#39;&lt;int:pk&gt;/edit/&#39;</span><span class="p">,</span> <span class="n">TransactionUpdateView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;edit&#39;</span><span class="p">),</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a>    <span class="n">path</span><span class="p">(</span><span class="s1">&#39;&lt;int:pk&gt;/delete/&#39;</span><span class="p">,</span> <span class="n">TransactionDeleteView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;delete&#39;</span><span class="p">),</span>
+</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a><span class="p">]</span>
 </span></pre></div>
 
 
