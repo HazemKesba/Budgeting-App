@@ -1,3 +1,7 @@
+"""
+URL routing configuration for the saving_goals application.
+Maps browser requests to specific View classes.
+"""
 from django.urls import path
 from . import views
 
