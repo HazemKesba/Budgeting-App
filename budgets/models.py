@@ -1,23 +1,38 @@
+"""
+Budget models for the budgeting application.
+
+Contains the `Budget` model which tracks spending limits, timeframes,
+alert thresholds, and provides helper methods to calculate spending progress.
+"""
 from django.db import models
 from django.conf import settings
 
 
 class Budget(models.Model):
-    user            = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    category        = models.ForeignKey("transactions.Category", on_delete=models.CASCADE)
-    amount          = models.DecimalField(max_digits=10, decimal_places=2)
-    start_date      = models.DateField()
-    end_date        = models.DateField()
+    """Represents a user-defined spending budget for a specific category and time period."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    category = models.ForeignKey("transactions.Category", on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    start_date = models.DateField()
+    end_date = models.DateField()
     alert_threshold = models.PositiveIntegerField(default=80)
-    spent           = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # temporary for testing
+    spent = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     class Meta:
         ordering = ['-start_date']
 
-    def __str__(self):
-        return f"{self.category.name} - {self.amount}"  # shows "Food - 600" in admin
+    def __str__(self) -> str:
+        return f"{self.category.name} - {self.amount}"
 
-    def get_spent(self):
+    def get_spent(self) -> float:
+        """Calculate the total amount spent in this budget's category within the date range.
+
+        Queries the `transactions` app for matching records. Falls back to the `spent` 
+        field if the transactions app is unavailable or an error occurs.
+
+        Returns:
+            float: The total amount spent.
+        """
         try:
             from transactions.models import Transaction
             result = Transaction.objects.filter(
@@ -27,21 +42,40 @@ class Budget(models.Model):
                 date__lte=self.end_date,
             ).aggregate(total=models.Sum('amount'))['total']
             return result or 0
-        except:
-            return self.spent  # uses manual field when transactions app doesn't exist
+        except Exception:
+            return self.spent
 
-    def get_remaining(self):
-        return self.amount - self.get_spent()  # 600 - 555 = 45
+    def get_remaining(self) -> float:
+        """Calculate the remaining budget amount.
 
-    def get_progress_percent(self):
+        Returns:
+            float: The difference between the budget amount and the amount spent.
+        """
+        return self.amount - self.get_spent()
+
+    def get_progress_percent(self) -> float:
+        """Calculate the percentage of the budget that has been spent.
+
+        Returns:
+            float: The spending progress as a percentage, rounded to one decimal place.
+            Returns 0 if the budget amount is 0 to avoid division by zero.
+        """
         if self.amount == 0:
             return 0
-        return round((self.get_spent() / self.amount) * 100, 1)  # (555/600)*100 = 93%
+        return round((self.get_spent() / self.amount) * 100, 1)
 
-    def get_status(self):
+    def get_status(self) -> str:
+        """Determine the budget status based on spending progress and the alert threshold.
+
+        Returns:
+            str: 
+                - ``'danger'`` if spending is 100% or over.
+                - ``'warning'`` if spending meets or exceeds the alert threshold.
+                - ``'safe'`` otherwise.
+        """
         pct = self.get_progress_percent()
         if pct >= 100:
-            return 'danger'   # over budget → red
+            return 'danger'
         elif pct >= self.alert_threshold:
-            return 'warning'  # near limit → orange  (uses YOUR alert % not hardcoded 80)
-        return 'safe'         # all good → blue
+            return 'warning'
+        return 'safe'
