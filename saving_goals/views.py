@@ -1,3 +1,7 @@
+"""
+View layer for the saving_goals application.
+Contains Class-Based Views (CBVs) for handling user interactions and HTTP methods.
+"""
 from datetime import date
 from django.shortcuts import render, redirect
 from django.views import View
@@ -8,8 +12,10 @@ from . import services
 
 
 class SavingGoalListView(LoginRequiredMixin, View):
+    """Displays a list of all saving goals for the logged-in user."""
 
     def get(self, request):
+        """Handles GET request to list goals, with optional status filtering."""
         status_filter = request.GET.get("status")
         goals = services.get_user_goals(request.user, status_filter=status_filter)
         context = {
@@ -20,8 +26,10 @@ class SavingGoalListView(LoginRequiredMixin, View):
 
 
 class SavingGoalDetailView(LoginRequiredMixin, View):
+    """Displays the detailed view of a single saving goal."""
 
     def get(self, request, goal_id):
+        """Handles GET request to view goal details."""
         goal = services.get_goal(request.user, goal_id)
         if goal is None:
             messages.error(request, "Goal not found.")
@@ -30,11 +38,14 @@ class SavingGoalDetailView(LoginRequiredMixin, View):
 
 
 class SavingGoalCreateView(LoginRequiredMixin, View):
+    """Handles the creation of a new saving goal."""
 
     def get(self, request):
+        """Displays the goal creation form."""
         return render(request, "saving_goals/create.html")
 
     def post(self, request):
+        """Processes form submission for a new goal."""
         goal_name = request.POST.get("goal_name", "")
         target_amount = request.POST.get("target_amount")
         current_amount = request.POST.get("current_amount", 0)
@@ -63,8 +74,10 @@ class SavingGoalCreateView(LoginRequiredMixin, View):
 
 
 class SavingGoalEditView(LoginRequiredMixin, View):
+    """Handles editing existing saving goals."""
 
     def get(self, request, goal_id):
+        """Displays the edit form for an existing goal."""
         goal = services.get_goal(request.user, goal_id)
         if goal is None:
             messages.error(request, "Goal not found.")
@@ -72,6 +85,7 @@ class SavingGoalEditView(LoginRequiredMixin, View):
         return render(request, "saving_goals/edit.html", {"goal": services.build_goal_data(goal)})
 
     def post(self, request, goal_id):
+        """Processes form submission to update goal details."""
         fields = {}
 
         if request.POST.get("goal_name"):
@@ -101,8 +115,10 @@ class SavingGoalEditView(LoginRequiredMixin, View):
 
 
 class SavingGoalDeleteView(LoginRequiredMixin, View):
+    """Handles the deletion of a saving goal with a confirmation step."""
 
     def get(self, request, goal_id):
+        """Displays the deletion confirmation page."""
         goal = services.get_goal(request.user, goal_id)
         if goal is None:
             messages.error(request, "Goal not found.")
@@ -110,6 +126,7 @@ class SavingGoalDeleteView(LoginRequiredMixin, View):
         return render(request, "saving_goals/delete_confirm.html", {"goal": services.build_goal_data(goal)})
 
     def post(self, request, goal_id):
+        """Processes the deletion of the goal."""
         deleted = services.delete_goal(request.user, goal_id)
         if not deleted:
             messages.error(request, "Goal not found.")
@@ -119,8 +136,10 @@ class SavingGoalDeleteView(LoginRequiredMixin, View):
 
 
 class GoalContributionView(LoginRequiredMixin, View):
+    """Handles logic for adding money (contributions) to a specific goal."""
 
     def post(self, request, goal_id):
+        """Processes the contribution amount submitted via POST."""
         amount = request.POST.get("amount")
 
         try:

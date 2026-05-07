@@ -1,3 +1,7 @@
+"""
+Service layer for saving_goals.
+Contains the business logic for creating, updating, and calculating goal progress.
+"""
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from decimal import Decimal
@@ -7,6 +11,23 @@ from .singleton import SessionManager
 
 
 def create_goal(user, goal_name, target_amount, deadline, current_amount=0, request=None):
+    """
+    Creates a new SavingGoal and notifies observers.
+    
+    Args:
+        user: The User instance.
+        goal_name (str): Name of the goal.
+        target_amount (float/Decimal): Target savings amount.
+        deadline (date): Target completion date.
+        current_amount (float/Decimal): Initial savings amount.
+        request (HttpRequest, optional): Current request context.
+        
+    Returns:
+        SavingGoal: The created goal object.
+        
+    Raises:
+        ValidationError: If input data is invalid.
+    """
     if not goal_name or not goal_name.strip():
         raise ValidationError("Goal name is required.")
 
@@ -45,6 +66,7 @@ def create_goal(user, goal_name, target_amount, deadline, current_amount=0, requ
 
 
 def get_user_goals(user, status_filter=None):
+    """Retrieves a queryset of goals for a specific user, optionally filtered by status."""
     qs = SavingGoal.objects.filter(user=user)
     if status_filter:
         qs = qs.filter(status=status_filter)
@@ -52,6 +74,7 @@ def get_user_goals(user, status_filter=None):
 
 
 def get_goal(user, goal_id):
+    """Retrieves a specific goal for a user or returns None if not found."""
     try:
         return SavingGoal.objects.get(id=goal_id, user=user)
     except SavingGoal.DoesNotExist:
@@ -59,6 +82,7 @@ def get_goal(user, goal_id):
 
 
 def update_goal(user, goal_id, **fields):
+    """Updates attributes of an existing goal."""
     goal = get_goal(user, goal_id)
     if goal is None:
         return None
@@ -91,6 +115,7 @@ def update_goal(user, goal_id, **fields):
 
 
 def delete_goal(user, goal_id):
+    """Deletes a goal and clears the session manager data."""
     goal = get_goal(user, goal_id)
     if goal is None:
         return False
@@ -102,6 +127,9 @@ def delete_goal(user, goal_id):
 
 
 def add_contribution(user, goal_id, amount, request=None):
+    """
+    Adds savings to a goal and triggers notifications. Updates session with last progress.
+    """
     goal = get_goal(user, goal_id)
     if goal is None:
         return None
@@ -126,6 +154,7 @@ def add_contribution(user, goal_id, amount, request=None):
             "amount":    str(amount),
             "progress":  str(calculate_progress(goal)),
         }, request=request)
+    
     session = SessionManager()
     session.set("last_viewed_goal", goal.id)
     session.set("last_progress", str(calculate_progress(goal)))
@@ -134,6 +163,7 @@ def add_contribution(user, goal_id, amount, request=None):
 
 
 def calculate_progress(goal):
+    """Calculates the percentage of the target amount saved."""
     if goal.target_amount == 0:
         return Decimal("0.00")
     raw = (goal.current_amount / goal.target_amount) * 100
@@ -141,6 +171,7 @@ def calculate_progress(goal):
 
 
 def calculate_monthly_saving_needed(goal):
+    """Calculates how much needs to be saved monthly to reach the goal by the deadline."""
     today  = timezone.now().date()
     months = (goal.deadline.year - today.year) * 12 + (goal.deadline.month - today.month)
     months = max(1, months)
@@ -149,6 +180,7 @@ def calculate_monthly_saving_needed(goal):
 
 
 def build_goal_data(goal):
+    """Converts a SavingGoal model instance into a dictionary for template rendering."""
     session = SessionManager()
     session.set("last_viewed_goal", goal.id)
 
