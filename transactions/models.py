@@ -1,3 +1,4 @@
+"""Models for financial transaction tracking and categorization."""
 from django.db import models
 from datetime import datetime
 
@@ -11,8 +12,8 @@ PAYMENT_METHODS = [
     ('card', 'Card'),
 ]
 
-# Create your models here.
 class Category(models.Model):
+    """Represents a transaction category. Can be system-wide (user=None) or user-specific."""
     user = models.ForeignKey(
         "users.CustomUser",
         on_delete=models.CASCADE,
@@ -37,6 +38,7 @@ class Category(models.Model):
 
 
 class Transaction(models.Model):
+    """Stores individual financial transactions linked to a user."""
     user = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE)
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
@@ -64,4 +66,3 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.get_transaction_type_display()}: {self.amount} ({self.description})"
-    

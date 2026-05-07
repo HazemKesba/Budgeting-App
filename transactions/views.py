@@ -1,3 +1,4 @@
+"""Class-based views for transaction management and reporting."""
 from django.views import View
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import FormView, ListView, UpdateView
@@ -11,22 +12,23 @@ from .models import Transaction, Category
 from .services import TransactionService
 
 class TransactionListView(LoginRequiredMixin, ListView):
+    """Displays paginated transaction history with optional category filtering."""
     model = Transaction
     template_name = 'transactions/transaction_list.html'
     context_object_name = 'transactions'
     paginate_by = 20
 
     def get_queryset(self):
+        """Filter transactions by owner and optional category query parameter."""
         qs = Transaction.objects.filter(user=self.request.user).select_related('category', 'savings_goal')
-        # 🔍 Filter by category if provided in URL params
         category_id = self.request.GET.get('category')
         if category_id:
             qs = qs.filter(category_id=category_id)
         return qs
 
     def get_context_data(self, **kwargs):
+        """Inject available categories and selected filter into template context."""
         context = super().get_context_data(**kwargs)
-        # Pass categories for filter dropdown
         context['categories'] = Category.objects.filter(
             Q(user__isnull=True) | Q(user=self.request.user)
         )
@@ -34,21 +36,25 @@ class TransactionListView(LoginRequiredMixin, ListView):
         return context
 
 class TransactionCreateView(LoginRequiredMixin, FormView):
+    """Handles new transaction creation via plain form and service delegation."""
     form_class = TransactionForm
     template_name = 'transactions/transaction_form.html'
     success_url = reverse_lazy('transactions:list')
 
     def get_form_kwargs(self):
+        """Pass the authenticated user to the form for dynamic choice population."""
         kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user  # ✅ Pass user to form
+        kwargs['user'] = self.request.user
         return kwargs
 
     def get_initial(self):
+        """Pre-fill the date field with the current datetime."""
         initial = super().get_initial()
-        initial['date'] = timezone.now().strftime('%Y-%m-%dT%H:%M')  # Pre-fill current datetime
+        initial['date'] = timezone.now().strftime('%Y-%m-%dT%H:%M')
         return initial
 
     def form_valid(self, form):
+        """Delegate creation to service layer, handle errors, and redirect on success."""
         try:
             TransactionService.create_transaction(
                 user=self.request.user,
@@ -61,6 +67,7 @@ class TransactionCreateView(LoginRequiredMixin, FormView):
             return self.form_invalid(form)
 
 class TransactionUpdateView(LoginRequiredMixin, FormView):
+    """Handles updating existing transactions with pre-filled form data."""
     form_class = TransactionForm
     template_name = 'transactions/transaction_form.html'
     success_url = reverse_lazy('transactions:list')
@@ -71,7 +78,7 @@ class TransactionUpdateView(LoginRequiredMixin, FormView):
         return kwargs
 
     def get_initial(self):
-        # Pre-fill form with existing transaction data
+        """Populate form fields with existing transaction data."""
         txn = get_object_or_404(Transaction, id=self.kwargs['pk'], user=self.request.user)
         return {
             'transaction_type': txn.transaction_type,
@@ -85,6 +92,7 @@ class TransactionUpdateView(LoginRequiredMixin, FormView):
         }
 
     def form_valid(self, form):
+        """Delegate update to service layer and handle validation/redirects."""
         try:
             TransactionService.update_transaction(
                 txn_id=self.kwargs['pk'],
@@ -101,14 +109,16 @@ class TransactionUpdateView(LoginRequiredMixin, FormView):
             return self.form_invalid(form)
 
 class TransactionDeleteView(LoginRequiredMixin, View):
+    """Handles GET confirmation rendering and POST deletion with service delegation."""
     template_name = 'transactions/transaction_confirm_delete.html'
 
     def get(self, request, *args, **kwargs):
-        # 🔹 Show confirmation page
+        """Render deletion confirmation page with transaction details."""
         txn = get_object_or_404(Transaction, id=kwargs['pk'], user=request.user)
         return render(request, self.template_name, {'object': txn})
 
     def post(self, request, *args, **kwargs):
+        """Execute deletion via service layer and redirect to transaction list."""
         try:
             TransactionService.delete_transaction(
                 txn_id=kwargs['pk'],
