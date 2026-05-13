@@ -1,7 +1,10 @@
 from django import forms
+from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+
+User = get_user_model()
 
 class SignUpForm(forms.Form):
     """Form for user registration with full name, email, and password validation."""
@@ -11,6 +14,13 @@ class SignUpForm(forms.Form):
     password = forms.CharField(widget=forms.PasswordInput, required=True)
     confirm_password = forms.CharField(widget=forms.PasswordInput, required=True)
 
+    def clean_email(self):
+        """Check if the email is already registered."""
+        email = self.cleaned_data.get("email").lower() # Normalize email
+        if User.objects.filter(email=email).exists():
+            raise ValidationError("A user with this email already exists.")
+        return email
+    
     def clean(self):
         """Validate password match and enforce Django password complexity rules.
         
